@@ -10,6 +10,7 @@ import java.util.Scanner;
 public class Terrain {
 
 	float [][] height; // regular grid of height values
+	float minh,maxh;
 	int dimx, dimy; // data dimensions
 	BufferedImage img; // greyscale image for displaying the terrain top-down
 	GridControl[][]  control;
@@ -46,7 +47,8 @@ public class Terrain {
 	void deriveImage()
 	{
 		img = new BufferedImage(dimy, dimx, BufferedImage.TYPE_INT_ARGB);
-		float maxh = -10000.0f, minh = 10000.0f;
+		 maxh = -10000.0f;
+		minh = 10000.0f;
 		
 		// determine range of heights
 		for(int x=0; x < dimx; x++)
@@ -75,7 +77,12 @@ public class Terrain {
 			permute.add(idx);
 		java.util.Collections.shuffle(permute);
 	}
-	
+
+	void resetPixel (int x, int y){
+		float val = (height[x][y] - minh) / (maxh - minh);
+		Color col = new Color(val, val, val, 1.0f);
+		img.setRGB(x, y, col.getRGB());
+	}
 	// find permuted 2D location from a linear index in the
 	// range [0, dimx*dimy)
 	void getPermute(int i, int [] loc) {

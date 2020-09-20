@@ -14,10 +14,12 @@ public class FlowPanel extends JPanel implements Runnable {
     private Graphics paintLayerGraphics;
 	private GridControl Control;
 	FlowPanel(Terrain terrain) {
-        addMouseMotionListener(new MouseAdapter() {
+        land=terrain;
+        addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseDragged(MouseEvent e) {
-                // if we moved the mouse previously draw a line from our prev point to our current position
+
+            public void mouseClicked(MouseEvent e) {
+
                 for(int i = e.getX()-2; i <= e.getX()+2; i++){
                     for(int j = e.getY()-2; j <= e.getY()+2; j++){
 
@@ -39,7 +41,7 @@ public class FlowPanel extends JPanel implements Runnable {
         });
 
 
-    land=terrain;
+
 	}
 		
 	// responsible for painting the terrain and water

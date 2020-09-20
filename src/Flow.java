@@ -1,10 +1,12 @@
 
 
 import javax.swing.*;
-
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+
+import java.awt.Dimension;
+
 import java.awt.BorderLayout;
 
 public class Flow {
@@ -12,7 +14,8 @@ public class Flow {
 	static int frameX;
 	static int frameY;
 	static FlowPanel fp;
-
+	static SimulationPlay[] simThread;
+	static volatile boolean paused;
 	// start timer
 	private static void tick(){
 		startTime = System.currentTimeMillis();
@@ -58,14 +61,23 @@ public class Flow {
         resetB.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                paused = true;
+                synchronized (landdata.control){
+                    for (int i = 0; i < landdata.getDimY() ; i++) {
+                        for (int j = 0; j < landdata.getDimY(); j++) {
+                            landdata.control[j][i].resetGridWater();
+                            landdata.resetPixel(j,i);
+                        }
+                    }
+                }
 
-                // reset the water value for each gridItem , make sure no other thread can do operations there
-                // note this may be a problem  if you try to reset during run
-                // might cause a deadlock
-                // but if it does then check here
+
+                for (int i = 0; i < 4; i++) {
+                    simThread[i].running = false;
+
+                }
 
 
-                //stop all threads
 
                 }
 
@@ -79,19 +91,36 @@ public class Flow {
         JButton pauseB = new JButton("Pause");
         pauseB.addActionListener(e ->{
             //stop all threads
-          //  for (int i = 0; i < 4; i++) {
-         //       threads[i].interrupt();
-         //   }
-          //  paused = true;
+
+            paused = true;
+            for (int i = 0; i < 4; i++) {
+                simThread[i].running = false;
+
+            }
+
         });
 
         //play button
         JButton playB = new JButton("Play");
         playB.addActionListener(e -> {
-           // if(!paused) {
+            paused= false;
+            if(!paused) {
 
             //    for (int i = 1; i <= 4; i++) {
-           //         int low = ((i - 1) / 4) * landdata.permute.size();
+
+			synchronized (simThread){
+                int incSize= landdata.permute.size();
+                int low =0 ;
+                int high= incSize;
+                for (int i = 1; i <= 4; i++) {
+                    simThread[i-1]= new SimulationPlay(incSize,low,landdata);
+                    low+= incSize;
+                    high+= incSize;
+                    simThread[i-1].start();
+
+
+
+			}}}
          //           int high = (i / 4) * landdata.permute.size();
              //       threads[i - 1] = (new SimRun(low, high, landdata));
               //      threads[i - 1].start();
@@ -136,9 +165,11 @@ public class Flow {
 		}
 				
 		// landscape information from file supplied as argument
-		// 
+		//
+		simThread = new SimulationPlay[4];
+
 		landdata.readData(args[0]);
-		
+		paused= false;
 		frameX = landdata.getDimX();
 		frameY = landdata.getDimY();
 		SwingUtilities.invokeLater(()->setupGUI(frameX, frameY, landdata));

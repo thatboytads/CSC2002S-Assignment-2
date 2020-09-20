@@ -71,7 +71,7 @@ public class GridControl {
      * @return
      */
     synchronized void deductGridWater(int numWater){
-        this.gridWater += numWater;
+        this.gridWater -= numWater;
     }
 
     /**
