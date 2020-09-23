@@ -6,12 +6,14 @@ public class SimulationPlay extends java.lang.Thread {
     private int upper;
     private int lower;
     private Terrain land;
-    boolean running;
-    public SimulationPlay(int upper, int lower, Terrain land){
+    volatile boolean running;
+    int count;
+    public SimulationPlay(int upper, int lower, Terrain land,int count){
         this.upper= upper;
         this.lower=lower;
         this.land= land;
         this.running= true;
+        this.count=count;
     }
     @Override
     public void run() {
@@ -43,13 +45,11 @@ public class SimulationPlay extends java.lang.Thread {
                                     lowfind.deductGridWater(1);
                                     lowest.addGridWater(1);
 
-                                    //change the color of the lowest  neigbor pixel to a shade of blue
-                                  //  float val = (lowest.getGridWater() - land.minh) / (land.maxh - land.minh);
-                                    //Color col = new Color(0, 0, val, 1.0f);
+
                                     land.img.setRGB(lowest.getGridCol(), lowest.getGridRow(),Color.BLUE.getRGB());
 
 
-                                    //reset the color of the current pixel of theres no water on it
+
                                     if (lowfind.getGridWater() == 0) {
                                          land.resetPixel(lowfind.getGridCol(), lowfind.getGridRow());
                                     } else {
@@ -60,6 +60,7 @@ public class SimulationPlay extends java.lang.Thread {
                                     }
 
                                     //repaint the panel
+
                                     Flow.fp.repaint();
 
                                 }
@@ -76,9 +77,15 @@ public class SimulationPlay extends java.lang.Thread {
 
                     }
                 }
+                this.count=i;
+
             }
+
+
         }
     }
 
-
+    public int getCount() {
+        return count;
+    }
 }

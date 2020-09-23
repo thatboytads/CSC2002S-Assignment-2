@@ -8,7 +8,8 @@ import java.awt.event.ActionListener;
 import java.awt.Dimension;
 
 import java.awt.BorderLayout;
-
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 public class Flow {
 	static long startTime = 0;
 	static int frameX;
@@ -16,6 +17,8 @@ public class Flow {
 	static FlowPanel fp;
 	static SimulationPlay[] simThread;
 	static volatile boolean paused;
+    static int count;
+    static JLabel timeStep;
 	// start timer
 	private static void tick(){
 		startTime = System.currentTimeMillis();
@@ -27,7 +30,7 @@ public class Flow {
 	}
 	
 	public static void setupGUI(int frameX,int frameY,Terrain landdata) {
-		
+		count=0;
 		Dimension fsize = new Dimension(800, 800);
     	JFrame frame = new JFrame("Waterflow"); 
     	frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -39,20 +42,24 @@ public class Flow {
 		fp = new FlowPanel(landdata);
 		fp.setPreferredSize(new Dimension(frameX,frameY));
 		g.add(fp);
+
 	    
-		// to do: add a MouseListener, buttons and ActionListeners on those buttons
-	   	
-		JPanel b = new JPanel();
-	    b.setLayout(new BoxLayout(b, BoxLayout.LINE_AXIS));
-		JButton endB = new JButton("End");;
+
+         timeStep = new JLabel("Time Step: ");
+        //count  = new JLabel(Integer.toString(SimulationPlay.c);
+
+        JPanel panel = new JPanel();
+	    panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+		JButton endButton = new JButton("End");;
 		// add the listener to the jbutton to handle the "pressed" event
-		endB.addActionListener(new ActionListener(){
+		endButton.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				// to do ask threads to stop
 				frame.dispose();
+				System.exit(0);
 			}
 		});
-				b.add(endB);
+				panel.add(endButton);
 
 
 
@@ -61,7 +68,11 @@ public class Flow {
         resetB.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                paused = true;
+                if (!paused){
+                    paused = true;
+                }
+
+
                 synchronized (landdata.control){
                     for (int i = 0; i < landdata.getDimY() ; i++) {
                         for (int j = 0; j < landdata.getDimY(); j++) {
@@ -104,47 +115,26 @@ public class Flow {
         JButton playB = new JButton("Play");
         playB.addActionListener(e -> {
             paused= false;
-            if(!paused) {
-
-            //    for (int i = 1; i <= 4; i++) {
-
-			synchronized (simThread){
-                int incSize= landdata.permute.size();
-                int low =0 ;
-                int high= incSize;
-                for (int i = 1; i <= 4; i++) {
-                    simThread[i-1]= new SimulationPlay(incSize,low,landdata);
-                    low+= incSize;
-                    high+= incSize;
-                    simThread[i-1].start();
+            getTimeStep();
 
 
 
-			}}}
-         //           int high = (i / 4) * landdata.permute.size();
-             //       threads[i - 1] = (new SimRun(low, high, landdata));
-              //      threads[i - 1].start();
-            //    }
-           // }else{
-           //     for (int i = 0; i < 4; i++) {
-           //         threads[i].start();
-          //      }
-          //  }
-        });
+       });
 
 
 
 
         //add the buttons
-        b.add(resetB);
-        b.add(pauseB);
-        b.add(playB);
-        b.add(endB);
-        g.add(b);
+        panel.add(resetB);
+        panel.add(pauseB);
+        panel.add(playB);
+        panel.add(endButton);
+        g.add(panel);
+        g.add(timeStep);
 
-        g.add(b);
+        g.add(panel);
     	
-		frame.setSize(frameX, frameY+50);	// a little extra space at the bottom for buttons
+		frame.setSize(frameX, frameY+80);	// a little extra space at the bottom for buttons
       	frame.setLocationRelativeTo(null);  // center window on screen
       	frame.add(g); //add contents to window
         frame.setContentPane(g);
@@ -152,8 +142,32 @@ public class Flow {
         Thread fpt = new Thread(fp);
         fpt.start();
 	}
-	
-		
+
+	public static void getTimeStep() {
+
+
+        if (!paused) {
+            //    for (int i = 1; i <= 4; i++) {
+
+            synchronized (simThread) {
+                int incSize = fp.land.permute.size();
+                int low = 0;
+                int high = incSize;
+                for (int i = 1; i <= 4; i++) {
+                    simThread[i - 1] = new SimulationPlay(incSize, low, fp.land,count);
+                    low += incSize;
+                    high += incSize;
+                    simThread[i - 1].start();
+                    count+= simThread[i-1].getCount();
+                    timeStep.setText("Time Step: "+ count   );
+
+                }
+
+
+            }
+        }
+    }
+
 	public static void main(String[] args) {
 		Terrain landdata = new Terrain();
 		
